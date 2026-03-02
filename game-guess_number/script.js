@@ -5,10 +5,10 @@ function checkGuess() {
     const result = document.getElementById("result");
 
     if (userGuess == randomNumber) {
-        result.innerHTML = "🎉 Correct! You guessed it!";
+        result.innerHTML = " Correct! You guessed it!";
         result.style.color = "green";
     } else {
-        result.innerHTML = "❌ Wrong! Try again.";
+        result.innerHTML = " dont worry u have lot of chances Try and Try until u suceeed .";
         result.style.color = "red";
     }
 }
