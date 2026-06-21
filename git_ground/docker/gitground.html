@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gitground// learn git visually</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0b0e14;
+    --panel: #111620;
+    --panel-2: #161c29;
+    --line: #232b3a;
+    --text: #d6deeb;
+    --dim: #6b7488;
+    --accent: #7ee787;   /* terminal green */
+    --accent2: #ffcb6b;  /* amber */
+    --accent3: #82aaff;  /* blue */
+    --accent4: #c792ea;  /* purple */
+    --accent5: #f78c6c;  /* orange */
+    --danger: #ff6b6b;
+    --head: #ffffff;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; height:100%; }
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    overflow:hidden;
+  }
+
+  /* ---------- HEADER ---------- */
+  header{
+    padding: 18px 28px 14px;
+    border-bottom: 1px solid var(--line);
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  header h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size: 22px;
+    margin:0;
+    letter-spacing: -0.5px;
+  }
+  header h1 span{ color: var(--accent); }
+  header .tag{
+    color: var(--dim);
+    font-size: 12px;
+  }
+
+  /* ---------- LAYOUT ---------- */
+  .wrap{
+    flex:1;
+    display:grid;
+    grid-template-columns: 1.3fr 380px;
+    min-height:0;
+  }
+  @media (max-width: 900px){
+    .wrap{ grid-template-columns: 1fr; }
+    .side{ border-left:none; border-top:1px solid var(--line); }
+  }
+
+  /* ---------- GRAPH AREA ---------- */
+  .graph-area{
+    position:relative;
+    overflow:auto;
+    padding: 30px;
+    background:
+      radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 1px) 0 0/28px 28px;
+  }
+  #graph{ display:block; min-width: 100%; }
+
+  .branch-label{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size: 12px;
+  }
+  .commit-hash{
+    font-size: 10px;
+    fill: var(--dim);
+  }
+  .commit-msg{
+    font-size: 12px;
+    fill: var(--text);
+  }
+  .head-tag{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:800;
+    font-size: 10px;
+    fill: var(--bg);
+  }
+
+  /* ---------- SIDE PANEL ---------- */
+  .side{
+    border-left: 1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    background: var(--panel);
+  }
+
+  .term{
+    flex: 1.1;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    border-bottom: 1px solid var(--line);
+  }
+  .term-head{
+    padding: 10px 16px;
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .term-head button{
+    background:none; border:1px solid var(--line); color:var(--dim);
+    font-family:inherit; font-size:10px; padding:4px 8px; border-radius:4px;
+    cursor:pointer; letter-spacing:1px;
+  }
+  .term-head button:hover{ color:var(--text); border-color:var(--dim); }
+
+  .term-log{
+    flex:1;
+    overflow-y:auto;
+    padding: 12px 16px;
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+  .term-log .row{ margin-bottom: 4px; word-break: break-word; }
+  .term-log .prompt{ color: var(--accent); }
+  .term-log .cmd{ color: var(--text); }
+  .term-log .out{ color: var(--dim); white-space: pre-wrap; }
+  .term-log .err{ color: var(--danger); }
+  .term-log .ok{ color: var(--accent); }
+  .term-log .hint{ color: var(--accent3); }
+
+  .term-input{
+    display:flex;
+    align-items:center;
+    padding: 10px 16px;
+    border-top: 1px solid var(--line);
+    gap: 8px;
+  }
+  .term-input .prompt{ color: var(--accent); flex-shrink:0; font-size:13px; }
+  .term-input input{
+    flex:1;
+    background: none;
+    border:none;
+    outline:none;
+    color: var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .term-input input::placeholder{ color: var(--dim); }
+
+  /* ---------- COMMANDS PANEL ---------- */
+  .commands{
+    flex:1;
+    overflow-y:auto;
+    padding: 14px 16px;
+  }
+  .commands h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 11px;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    color: var(--dim);
+    margin: 14px 0 8px;
+  }
+  .commands h3:first-child{ margin-top:0; }
+  .cmd-btn{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    width:100%;
+    background: var(--panel-2);
+    border:1px solid var(--line);
+    color: var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius:6px;
+    margin-bottom:6px;
+    cursor:pointer;
+    text-align:left;
+    transition: border-color .12s, transform .06s;
+  }
+  .cmd-btn:hover{ border-color: var(--accent); }
+  .cmd-btn:active{ transform: scale(0.98); }
+  .cmd-btn .desc{
+    color: var(--dim);
+    font-size: 10.5px;
+    margin-left: 10px;
+    white-space: nowrap;
+  }
+
+  /* ---------- LEGEND / STATUS ---------- */
+  .status-bar{
+    padding: 8px 28px;
+    border-top: 1px solid var(--line);
+    display:flex; gap:24px; align-items:center;
+    font-size: 11.5px;
+    color: var(--dim);
+    flex-wrap:wrap;
+  }
+  .status-bar b{ color: var(--text); }
+  .legend-dot{
+    display:inline-block; width:9px; height:9px; border-radius:50%;
+    margin-right:6px; vertical-align:middle;
+  }
+
+  /* scrollbars */
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background: var(--line); border-radius:4px; }
+  ::-webkit-scrollbar-track{ background: transparent; }
+
+  /* node animation */
+  .commit-node{ transition: cx .35s ease, cy .35s ease; }
+  .edge-path{ transition: d .35s ease; }
+  .fade-in{ animation: fadeIn .4s ease; }
+  @keyframes fadeIn{ from{ opacity:0; transform: scale(0.6); } to{ opacity:1; transform: scale(1); } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>git<span>ground</span>//</h1>
+  <div class="tag">by pavan — a playground for understanding commits, branches &amp; merges — type real git commands, watch the DAG move</div>
+</header>
+
+<div class="wrap">
+  <div class="graph-area">
+    <svg id="graph" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <div class="side">
+    <div class="term">
+      <div class="term-head">
+        <span>terminal</span>
+        <button id="resetBtn">reset repo</button>
+      </div>
+      <div class="term-log" id="log"></div>
+      <div class="term-input">
+        <span class="prompt">~/repo $</span>
+        <input id="cmdInput" type="text" placeholder="git commit -m &quot;message&quot;" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+
+    <div class="commands">
+      <h3>quick commands</h3>
+      <button class="cmd-btn" data-cmd="git add .">git add .<span class="desc">stage changes</span></button>
+      <button class="cmd-btn" data-cmd='git commit -m "new commit"'>git commit -m "..."<span class="desc">snapshot</span></button>
+      <button class="cmd-btn" data-cmd="git branch feature">git branch feature<span class="desc">create branch</span></button>
+      <button class="cmd-btn" data-cmd="git checkout feature">git checkout feature<span class="desc">switch branch</span></button>
+      <button class="cmd-btn" data-cmd="git checkout -b feature">git checkout -b feature<span class="desc">create + switch</span></button>
+      <button class="cmd-btn" data-cmd="git checkout main">git checkout main<span class="desc">back to main</span></button>
+      <button class="cmd-btn" data-cmd="git merge feature">git merge feature<span class="desc">merge into HEAD</span></button>
+      <button class="cmd-btn" data-cmd="git log">git log<span class="desc">history</span></button>
+      <button class="cmd-btn" data-cmd="git branch -d feature">git branch -d feature<span class="desc">delete branch</span></button>
+
+      <h3>concepts</h3>
+      <button class="cmd-btn" data-cmd="!explain head">what is HEAD?<span class="desc">concept</span></button>
+      <button class="cmd-btn" data-cmd="!explain branch">what is a branch?<span class="desc">concept</span></button>
+      <button class="cmd-btn" data-cmd="!explain merge">fast-forward vs merge<span class="desc">concept</span></button>
+      <button class="cmd-btn" data-cmd="!explain commit">what's in a commit?<span class="desc">concept</span></button>
+
+      <h3>scenario</h3>
+      <button class="cmd-btn" data-cmd="!scenario feature-merge">feature branch + merge<span class="desc">guided demo</span></button>
+      <button class="cmd-btn" data-cmd="!scenario diverge">diverging history<span class="desc">guided demo</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <span><span class="legend-dot" style="background:var(--head)"></span>HEAD &amp; current branch tag (white)</span>
+  <span><span class="legend-dot" style="background:var(--accent)"></span>main</span>
+  <span><span class="legend-dot" style="background:var(--accent2)"></span>feature</span>
+  <span><span class="legend-dot" style="background:var(--accent3)"></span>other branches</span>
+  <span>Commits: <b id="commitCount">1</b></span>
+  <span>Branches: <b id="branchCount">1</b></span>
+</div>
+
+<script>
+/* ============================================================
+   MINI GIT MODEL
+   Each commit: { id, parents:[id...], branchColorIdx, msg, x, y }
+   branches: { name: commitId }
+   HEAD: { type:'branch', name } | { type:'detached', commit }
+   ============================================================ */
+
+const COLORS = ['accent','accent2','accent3','accent4','accent5'];
+let colorMap = {}; // branchName -> color var name
+let colorIdx = 0;
+
+function colorFor(branch){
+  if(!colorMap[branch]){
+    colorMap[branch] = COLORS[colorIdx % COLORS.length];
+    colorIdx++;
+  }
+  return 'var(--' + colorMap[branch] + ')';
+}
+
+let state = null;
+
+function freshState(){
+  colorMap = {}; colorIdx = 0;
+  const initId = shortId();
+  colorFor('main');
+  return {
+    commits: {
+      [initId]: { id: initId, parents: [], msg: 'init', branchAtCreation:'main' }
+    },
+    order: [initId],
+    branches: { main: initId },
+    head: { type:'branch', name:'main' }
+  };
+}
+
+function shortId(){
+  return Math.random().toString(16).slice(2,8);
+}
+
+/* ---------------- COMMAND ENGINE ---------------- */
+
+function currentCommit(){
+  if(state.head.type==='branch') return state.branches[state.head.name];
+  return state.head.commit;
+}
+
+function isAncestor(a,b){ // is a an ancestor of (or equal to) b?
+  let visited = new Set();
+  let stack=[b];
+  while(stack.length){
+    const c = stack.pop();
+    if(c===a) return true;
+    if(visited.has(c)) continue;
+    visited.add(c);
+    const commit = state.commits[c];
+    if(commit) stack.push(...commit.parents);
+  }
+  return false;
+}
+
+function runCommand(raw){
+  const cmd = raw.trim();
+  if(!cmd) return null;
+
+  if(cmd.startsWith('!explain')){
+    const topic = cmd.split(' ')[1];
+    return explain(topic);
+  }
+  if(cmd.startsWith('!scenario')){
+    const which = cmd.split(' ')[1];
+    return runScenario(which);
+  }
+
+  const parts = cmd.split(/\s+/);
+  if(parts[0] !== 'git'){
+    return {type:'err', text:`command not found: ${parts[0]} (try a git command)`};
+  }
+
+  const sub = parts[1];
+
+  switch(sub){
+    case 'add': {
+      const target = parts[2] || '.';
+      return {type:'ok', text:`Changes staged for commit (${target}).`, hint:'git add moves changes into the "staging area" — a draft for your next commit. Nothing is saved to history yet until you run git commit.'};
+    }
+
+    case 'commit': {
+      let msg = 'commit';
+      const mIdx = parts.indexOf('-m');
+      if(mIdx !== -1){
+        msg = cmd.slice(cmd.indexOf('-m')+2).trim();
+        msg = msg.replace(/^["']|["']$/g,'');
+        if(!msg) msg = 'commit';
+      }
+      const parentId = currentCommit();
+      const newId = shortId();
+      state.commits[newId] = { id:newId, parents:[parentId], msg, branchAtCreation: state.head.type==='branch'?state.head.name:null };
+      state.order.push(newId);
+
+      if(state.head.type==='branch'){
+        state.branches[state.head.name] = newId;
+        return {type:'ok', text:`[${state.head.name} ${newId}] ${msg}`};
+      } else {
+        state.head = {type:'detached', commit:newId};
+        return {type:'ok', text:`[detached HEAD ${newId}] ${msg}`, hint:'You are in detached HEAD — create a branch to keep this commit reachable.'};
+      }
+    }
+
+    case 'branch': {
+      // git branch            -> list
+      // git branch <name>     -> create
+      // git branch -d <name>  -> delete
+      if(parts.length===2){
+        let out = Object.keys(state.branches).map(b=>{
+          const cur = (state.head.type==='branch' && state.head.name===b) ? '* ' : '  ';
+          return cur+b;
+        }).join('\n');
+        return {type:'out', text: out};
+      }
+      if(parts[2]==='-d' || parts[2]==='-D'){
+        const name = parts[3];
+        if(!state.branches[name]) return {type:'err', text:`error: branch '${name}' not found.`};
+        if(state.head.type==='branch' && state.head.name===name) return {type:'err', text:`error: cannot delete branch '${name}' checked out`};
+        delete state.branches[name];
+        return {type:'ok', text:`Deleted branch ${name}.`};
+      }
+      const name = parts[2];
+      if(state.branches[name]) return {type:'err', text:`fatal: A branch named '${name}' already exists.`};
+      state.branches[name] = currentCommit();
+      colorFor(name);
+      return {type:'ok', text:`Created branch '${name}' at ${currentCommit()}`};
+    }
+
+    case 'checkout': {
+      let createNew = false, name;
+      if(parts[2]==='-b'){ createNew = true; name = parts[3]; }
+      else { name = parts[2]; }
+
+      if(!name) return {type:'err', text:'usage: git checkout [-b] <branch>'};
+
+      if(createNew){
+        if(state.branches[name]) return {type:'err', text:`fatal: A branch named '${name}' already exists.`};
+        state.branches[name] = currentCommit();
+        colorFor(name);
+        state.head = {type:'branch', name};
+        return {type:'ok', text:`Switched to a new branch '${name}'`};
+      }
+
+      if(state.branches[name]){
+        state.head = {type:'branch', name};
+        return {type:'ok', text:`Switched to branch '${name}'`};
+      }
+      if(state.commits[name]){
+        state.head = {type:'detached', commit:name};
+        return {type:'ok', text:`Note: switching to '${name}'.\nYou are in 'detached HEAD' state.`, hint:'Detached HEAD: HEAD points directly at a commit, not a branch.'};
+      }
+      return {type:'err', text:`error: pathspec '${name}' did not match any branch or commit.`};
+    }
+
+    case 'merge': {
+      const name = parts[2];
+      if(!name) return {type:'err', text:'usage: git merge <branch>'};
+      if(!state.branches[name] && !state.commits[name]) return {type:'err', text:`merge: ${name} - not something we can merge`};
+      if(state.head.type!=='branch') return {type:'err', text:'fatal: cannot merge in detached HEAD (checkout a branch first)'};
+
+      const target = state.branches[name] || name;
+      const current = currentCommit();
+
+      if(target===current){
+        return {type:'out', text:'Already up to date.'};
+      }
+
+      if(isAncestor(current, target)){
+        // fast-forward
+        state.branches[state.head.name] = target;
+        return {type:'ok', text:`Updating ${current.slice(0,5)}..${target.slice(0,5)}\nFast-forward`, hint:'Fast-forward: no new commit needed — current branch pointer just moves forward.'};
+      }
+
+      if(isAncestor(target, current)){
+        return {type:'out', text:'Already up to date.'};
+      }
+
+      // real merge commit
+      const newId = shortId();
+      const msg = `Merge branch '${name}' into ${state.head.name}`;
+      state.commits[newId] = { id:newId, parents:[current, target], msg, branchAtCreation: state.head.name, isMerge:true };
+      state.order.push(newId);
+      state.branches[state.head.name] = newId;
+      return {type:'ok', text:`Merge made by the 'recursive' strategy.\n[${state.head.name} ${newId}] ${msg}`, hint:'A merge commit has TWO parents — it joins both histories together.'};
+    }
+
+    case 'log': {
+      let lines = [];
+      let id = currentCommit();
+      let visited = new Set();
+      let queue = [id];
+      // simple BFS over ancestors, ordered by insertion order (approx)
+      const seen = new Set();
+      const ordered = state.order.filter(cid=>isAncestor(cid, currentCommit())).reverse();
+      ordered.forEach(cid=>{
+        const c = state.commits[cid];
+        const tags = Object.entries(state.branches).filter(([b,cc])=>cc===cid).map(([b])=>b);
+        let tagStr = tags.length ? `  (${tags.join(', ')}${ (state.head.type==='branch' && tags.includes(state.head.name)) ? ', HEAD -> '+state.head.name : ''})` : (state.head.type==='detached' && state.head.commit===cid ? '  (HEAD)' : '');
+        lines.push(`commit ${cid}${tagStr}\n    ${c.msg}`);
+      });
+      return {type:'out', text: lines.join('\n\n')};
+    }
+
+    case 'status': {
+      const headDesc = state.head.type==='branch' ? `On branch ${state.head.name}` : `HEAD detached at ${state.head.commit}`;
+      return {type:'out', text: `${headDesc}\nnothing to commit, working tree clean`};
+    }
+
+    default:
+      return {type:'err', text:`git: '${sub}' is not a supported command in this simulator.\nTry: commit, branch, checkout, merge, log, status`};
+  }
+}
+
+/* ---------------- EXPLANATIONS ---------------- */
+function explain(topic){
+  const map = {
+    head: `HEAD is a pointer that tells Git "where you currently are".\nUsually HEAD points to a BRANCH (shown in white in the graph),\nand that branch points to a commit.\n\nWhen you commit, the branch HEAD points to moves forward\nto the new commit automatically.\n\nIf HEAD points directly at a commit (not a branch), you're\nin "detached HEAD" state — new commits won't belong to any branch\nunless you create one.`,
+    branch: `A branch is just a movable label (pointer) on a commit.\nIt is NOT a copy of your files — creating a branch is instant\nand cheap because it's only a 4-byte pointer.\n\nWhen you commit while on a branch, that branch's pointer\nmoves forward to the new commit. Other branches stay put.`,
+    merge: `FAST-FORWARD merge:\nIf the branch you're merging in is just "ahead" of you\n(your current commit is its ancestor), Git simply moves\nyour branch pointer forward. No new commit is created.\n\nTRUE MERGE (3-way merge):\nIf both branches have new commits since they diverged,\nGit creates a new "merge commit" with TWO parents —\none from each branch — joining the histories together.\n\nTry the "diverging history" scenario to see both in action.`,
+    commit: `A commit is a snapshot of your project at a point in time.\nEach commit stores:\n  • a unique hash (id)\n  • a pointer to its parent commit(s)\n  • the change snapshot\n  • author, message, timestamp\n\nBecause each commit points to its parent, the whole history\nforms a chain — or, with branches & merges, a graph (DAG).`
+  };
+  return {type:'out', text: map[topic] || 'Unknown topic. Try: head, branch, merge, commit'};
+}
+
+/* ---------------- SCENARIOS ---------------- */
+function runScenario(which){
+  const scenarios = {
+    'feature-merge': [
+      'git checkout -b feature',
+      'git commit -m "add login form"',
+      'git commit -m "add validation"',
+      'git checkout main',
+      'git merge feature'
+    ],
+    'diverge': [
+      'git checkout -b feature',
+      'git commit -m "feature work A"',
+      'git checkout main',
+      'git commit -m "hotfix on main"',
+      'git merge feature'
+    ]
+  };
+  const steps = scenarios[which];
+  if(!steps) return {type:'err', text:'unknown scenario'};
+  // run sequentially with logging
+  let outputs = [];
+  steps.forEach(s=>{
+    outputs.push({cmd:s, res: runCommand(s)});
+  });
+  return {type:'scenario', steps: outputs};
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+
+const COL_W = 90;   // horizontal spacing between graph "lanes" (per branch)
+const ROW_H = 64;   // vertical spacing between commits
+const NODE_R = 14;
+const MARGIN_L = 70;
+const MARGIN_T = 50;
+
+function layout(){
+  // assign each branch a lane (x position) based on order of first appearance
+  let lanes = {};
+  let laneCount = 0;
+  // main always lane 0
+  lanes['main'] = 0; laneCount = 1;
+
+  // assign y by order index
+  const positions = {};
+  state.order.forEach((id, idx)=>{
+    const c = state.commits[id];
+    let laneKey = c.branchAtCreation || 'main';
+    if(!(laneKey in lanes)){
+      lanes[laneKey] = laneCount++;
+    }
+    positions[id] = {
+      x: MARGIN_L + lanes[laneKey]*COL_W,
+      y: MARGIN_T + idx*ROW_H,
+      lane: laneKey
+    };
+  });
+
+  // ensure any currently-existing branch has a lane (even if no commit created on it yet beyond branch point)
+  Object.keys(state.branches).forEach(b=>{
+    if(!(b in lanes)) lanes[b] = laneCount++;
+  });
+
+  return {positions, lanes};
+}
+
+function render(){
+  const svg = document.getElementById('graph');
+  const {positions, lanes} = layout();
+
+  const maxY = MARGIN_T + (state.order.length-1)*ROW_H + 80;
+  const maxX = MARGIN_L + (Object.keys(lanes).length)*COL_W + 160;
+
+  svg.setAttribute('viewBox', `0 0 ${maxX} ${maxY}`);
+  svg.setAttribute('width', maxX);
+  svg.setAttribute('height', maxY);
+
+  let html = '';
+
+  // edges first (so nodes draw on top)
+  state.order.forEach(id=>{
+    const c = state.commits[id];
+    const p1 = positions[id];
+    c.parents.forEach(parentId=>{
+      const p0 = positions[parentId];
+      if(!p0) return;
+      const color = colorFor(p1.lane);
+      // curved path if lanes differ
+      let d;
+      if(p0.x === p1.x){
+        d = `M ${p0.x} ${p0.y} L ${p1.x} ${p1.y}`;
+      } else {
+        const midY = (p0.y + p1.y)/2;
+        d = `M ${p0.x} ${p0.y} C ${p0.x} ${midY}, ${p1.x} ${midY}, ${p1.x} ${p1.y}`;
+      }
+      html += `<path class="edge-path" d="${d}" stroke="${color}" stroke-width="2.5" fill="none" opacity="0.55"/>`;
+    });
+  });
+
+  // branch lane labels (top) — only for lanes that actually have a commit created in them
+  const usedLanes = new Set(state.order.map(id => state.commits[id].branchAtCreation || 'main'));
+  Object.entries(lanes).forEach(([branch, lane])=>{
+    if(!usedLanes.has(branch)) return;
+    const x = MARGIN_L + lane*COL_W;
+    const color = colorFor(branch);
+    html += `<text class="branch-label" x="${x}" y="22" text-anchor="middle" fill="${color}">${branch}</text>`;
+    html += `<line x1="${x}" y1="30" x2="${x}" y2="${maxY-20}" stroke="${color}" stroke-width="1" opacity="0.08"/>`;
+  });
+
+  // nodes
+  state.order.forEach(id=>{
+    const c = state.commits[id];
+    const p = positions[id];
+    const color = colorFor(p.lane);
+    const isHeadCommit = (state.head.type==='detached' && state.head.commit===id) ||
+                          (state.head.type==='branch' && state.branches[state.head.name]===id);
+
+    html += `<g class="fade-in">`;
+    if(c.isMerge){
+      html += `<circle class="commit-node" cx="${p.x}" cy="${p.y}" r="${NODE_R}" fill="${color}" stroke="var(--bg)" stroke-width="3" opacity="0.9"/>`;
+      html += `<circle cx="${p.x}" cy="${p.y}" r="${NODE_R-5}" fill="var(--bg)"/>`;
+    } else {
+      html += `<circle class="commit-node" cx="${p.x}" cy="${p.y}" r="${NODE_R}" fill="${color}" stroke="var(--bg)" stroke-width="3"/>`;
+    }
+
+    if(isHeadCommit){
+      html += `<circle cx="${p.x}" cy="${p.y}" r="${NODE_R+5}" fill="none" stroke="var(--head)" stroke-width="2" stroke-dasharray="3,3"/>`;
+    }
+
+    // commit message + hash
+    html += `<text class="commit-msg" x="${p.x+NODE_R+12}" y="${p.y-3}">${escapeHtml(c.msg)}</text>`;
+    html += `<text class="commit-hash" x="${p.x+NODE_R+12}" y="${p.y+12}">${id}</text>`;
+
+    html += `</g>`;
+  });
+
+  // branch tags (pointing to current branch tip commits) — drawn after nodes, to the left
+  // group branches by the commit they point to, so tags stack instead of overlapping
+  const byCommit = {};
+  Object.entries(state.branches).forEach(([branch, commitId])=>{
+    (byCommit[commitId] = byCommit[commitId] || []).push(branch);
+  });
+
+  Object.entries(byCommit).forEach(([commitId, branchList])=>{
+    const p = positions[commitId];
+    if(!p) return;
+    // put the current branch (if any) first
+    branchList.sort((a,b)=>{
+      const aCur = state.head.type==='branch' && state.head.name===a;
+      const bCur = state.head.type==='branch' && state.head.name===b;
+      return (bCur?1:0)-(aCur?1:0);
+    });
+
+    branchList.forEach((branch, i)=>{
+      const color = colorFor(branch);
+      const isCurrent = state.head.type==='branch' && state.head.name===branch;
+      const tagW = branch.length*7 + 16;
+      const tx = p.x - NODE_R - tagW - 14;
+      const ty = p.y - 11 + (i - (branchList.length-1)/2)*26;
+      html += `<g class="fade-in">`;
+      html += `<rect x="${tx}" y="${ty}" width="${tagW}" height="22" rx="5" fill="${isCurrent ? 'var(--head)' : color}" opacity="${isCurrent?1:0.85}"/>`;
+      html += `<text class="head-tag" x="${tx+tagW/2}" y="${ty+15}" text-anchor="middle" fill="var(--bg)">${branch}</text>`;
+      html += `</g>`;
+      if(isCurrent){
+        html += `<text class="commit-hash" x="${tx+tagW/2}" y="${ty-6}" text-anchor="middle" fill="var(--head)">HEAD</text>`;
+      }
+      // connector line from tag to node
+      html += `<line x1="${tx+tagW}" y1="${ty+11}" x2="${p.x-NODE_R}" y2="${p.y}" stroke="${color}" stroke-width="1" opacity="0.3"/>`;
+    });
+  });
+
+  // detached HEAD marker
+  if(state.head.type==='detached'){
+    const p = positions[state.head.commit];
+    if(p){
+      html += `<text class="commit-hash" x="${p.x}" y="${p.y-22}" text-anchor="middle" fill="var(--head)">HEAD (detached)</text>`;
+    }
+  }
+
+  svg.innerHTML = html;
+
+  // status bar counts
+  document.getElementById('commitCount').textContent = state.order.length;
+  document.getElementById('branchCount').textContent = Object.keys(state.branches).length;
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ============================================================
+   TERMINAL UI
+   ============================================================ */
+
+const logEl = document.getElementById('log');
+const input = document.getElementById('cmdInput');
+
+function printRow(html){
+  const div = document.createElement('div');
+  div.className = 'row';
+  div.innerHTML = html;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function printCommand(cmd){
+  printRow(`<span class="prompt">~/repo $</span> <span class="cmd">${escapeHtml(cmd)}</span>`);
+}
+
+function printResult(res){
+  if(!res) return;
+  if(res.type==='scenario'){
+    res.steps.forEach(s=>{
+      printCommand(s.cmd);
+      printResult(s.res);
+    });
+    return;
+  }
+  if(res.text){
+    const cls = res.type==='err' ? 'err' : res.type==='ok' ? 'ok' : 'out';
+    printRow(`<span class="${cls}">${escapeHtml(res.text)}</span>`);
+  }
+  if(res.hint){
+    printRow(`<span class="hint">→ ${escapeHtml(res.hint)}</span>`);
+  }
+}
+
+function execute(cmd){
+  printCommand(cmd);
+  const res = runCommand(cmd);
+  printResult(res);
+  render();
+}
+
+input.addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
+    const val = input.value;
+    if(val.trim()){
+      execute(val);
+    }
+    input.value='';
+  }
+});
+
+document.querySelectorAll('.cmd-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    execute(btn.dataset.cmd);
+    input.focus();
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  state = freshState();
+  logEl.innerHTML='';
+  printRow(`<span class="hint">Repo reset. Initial commit created on 'main'.</span>`);
+  render();
+});
+
+/* ---------------- INIT ---------------- */
+state = freshState();
+printRow(`<span class="hint">Welcome! Type git commands below, or click quick commands on the right.</span>`);
+printRow(`<span class="hint">Try: git checkout -b feature  →  git commit -m "..."  →  git checkout main  →  git merge feature</span>`);
+render();
+input.focus();
+</script>
+</body>
+</html>
